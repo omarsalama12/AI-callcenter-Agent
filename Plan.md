@@ -1,50 +1,50 @@
-# AI-Native BPO Platform — خطة المشروع الكاملة
+# AI-Native BPO Platform — Full Project Plan
 
-> منصة كول سنتر مبنية بالكامل على الذكاء الاصطناعي — وكلاء مستقلين يستقبلون المكالمات، يفهمون العميل، وينفذون المهام فعلياً على أنظمة الشركة.
-
----
-
-## 1. الـ Stack الكامل
-
-| الطبقة | التقنية | الحالة | الدور |
-|---|---|---|---|
-| الصوت | NVIDIA PersonaPlex | Production | محادثة صوتية Full Duplex — يسمع ويتكلم في نفس الوقت |
-| أمان الكلام | NeMo Guardrails | Stable | يمنع الردود الغلط والخروج عن الموضوع |
-| الهاتف | Twilio / Vonage | Production | SIP Trunk — استقبال وتوجيه المكالمات |
-| المايسترو | Agno | Stable | ينسق فريق الوكلاء ويدير الجلسات |
-| الدماغ | Ollama + Nemotron | Production | LLM محلي — صفر بيانات تخرج للإنترنت |
-| الأيدي | OpenClaw + NemoClaw | Alpha | تنفيذ آمن على أنظمة الشركة داخل Sandbox |
-| الذاكرة | Qdrant + LlamaIndex | Stable | RAG — قاعدة معرفة خاصة لكل عميل |
-| السجلات | Apache Kafka | Production | Event streaming — تسجيل كل حدث |
-| الإدارة | Docker + Kubernetes | Production | كل شركة في container معزول |
-| المراقبة | Grafana + Prometheus | Production | Dashboard حي + تحليل مشاعر |
+> An enterprise-grade, multi-tenant AI call center platform where autonomous agents handle customer calls, understand intent, and execute real tasks on company systems — with natural voice and zero perceptible latency.
 
 ---
 
-## 2. الأجهزة المطلوبة
+## 1. Full Tech Stack
 
-### السيرفر الرئيسي
-
-| المكوّن | الحد الأدنى | الموصى به | الدور |
+| Layer | Technology | Status | Role |
 |---|---|---|---|
-| CPU | 2x Intel Xeon 32-core | 2x AMD EPYC 9354 | معالجة الطلبات، Kafka، Kubernetes |
-| RAM | 256 GB DDR5 | 512 GB — 1 TB DDR5 | تحميل النماذج والجلسات المتزامنة |
-| GPU | 2x NVIDIA A100 40GB | 4x NVIDIA A100 80GB / H100 | PersonaPlex، LLM inference |
-| Storage | 4x 2TB NVMe | 4x 4TB NVMe RAID 10 | سجلات المكالمات، نماذج الـ LLM |
-| Network | 1x 10Gbps | 2x 25Gbps NIC | المكالمات المتزامنة بدون bottleneck |
-| OS | Ubuntu 22.04 LTS | Ubuntu 24.04 LTS | دعم NVIDIA Container Runtime |
+| Voice | NVIDIA PersonaPlex | Production | Full-duplex speech — listens and speaks simultaneously |
+| Speech Safety | NeMo Guardrails | Stable | Blocks wrong responses and off-topic behavior |
+| Telephony | Twilio / Vonage | Production | SIP Trunk — call ingestion and routing |
+| Orchestrator | Agno | Stable | Coordinates the agent team and manages sessions |
+| Brain | Ollama + Nemotron | Production | Local LLM — zero data egress to the internet |
+| Hands | OpenClaw + NemoClaw | Alpha | Secure execution on client systems inside a sandbox |
+| Memory | Qdrant + LlamaIndex | Stable | RAG — isolated knowledge base per client |
+| Event Bus | Apache Kafka | Production | Streams and logs every system event |
+| Infrastructure | Docker + Kubernetes | Production | Each client isolated in its own container group |
+| Monitoring | Grafana + Prometheus | Production | Live dashboards and real-time sentiment analysis |
 
-### توزيع الـ GPU
+---
+
+## 2. Hardware Requirements
+
+### Production Server
+
+| Component | Minimum | Recommended | Role |
+|---|---|---|---|
+| CPU | 2x Intel Xeon 32-core | 2x AMD EPYC 9354 (32-core) | Request processing, Kafka, Kubernetes control plane |
+| RAM | 256 GB DDR5 | 512 GB — 1 TB DDR5 | Model loading, vector store, concurrent sessions |
+| GPU | 2x NVIDIA A100 40GB | 4x NVIDIA A100 80GB / H100 | PersonaPlex, LLM inference, embeddings |
+| Storage | 4x 2TB NVMe SSD | 4x 4TB NVMe (RAID 10) | Call recordings, LLM models, Kafka logs |
+| Network | 1x 10Gbps NIC | 2x 25Gbps NIC | Concurrent calls without bottleneck |
+| OS | Ubuntu 22.04 LTS | Ubuntu 24.04 LTS | Full NVIDIA Container Runtime support |
+
+### GPU Allocation Strategy
 
 ```
-GPU 0 + GPU 1  →  PersonaPlex         أعلى أولوية — أي تأخير يأثر على كل المكالمات
-GPU 2          →  Ollama LLM          مشترك بين العملاء بـ time-slicing عادل
-GPU 3          →  Reserved            overflow + تحميل نماذج جديدة
+GPU 0 + GPU 1  →  PersonaPlex (Voice)     Highest priority — any lag affects every call
+GPU 2          →  Ollama LLM              Shared across clients via fair time-slicing
+GPU 3          →  Reserved                Overflow handling + new model loading
 ```
 
-### بيئة التطوير
+### Development Machine
 
-| المكوّن | الحد الأدنى | الموصى به |
+| Component | Minimum | Recommended |
 |---|---|---|
 | CPU | Intel i7 / AMD Ryzen 7 | Intel i9 / AMD Ryzen 9 |
 | RAM | 32 GB | 64 GB |
@@ -53,159 +53,163 @@ GPU 3          →  Reserved            overflow + تحميل نماذج جدي�
 
 ---
 
-## 3. خطة البناء — 4 مراحل في 9 أشهر
+## 3. Build Plan — 4 Phases over 9 Months
 
 ```
-شهر:  1    2    3    4    5    6    7    8    9
-      ████ ████ ░░░░ ░░░░ ░░░░ ░░░░ ░░░░ ░░░░ ░░░░  المرحلة 1: الأساس
-                ████ ████ ░░░░ ░░░░ ░░░░ ░░░░ ░░░░  المرحلة 2: الربط
-                          ████ ████ ████ ░░░░ ░░░░  المرحلة 3: التوسع
-                                         ████ ████  المرحلة 4: الإنتاج
+Month:  1    2    3    4    5    6    7    8    9
+        ████ ████                                   Phase 1: Foundation
+                  ████ ████                         Phase 2: Integration
+                            ████ ████ ████          Phase 3: Multi-Tenant Scale
+                                         ████ ████  Phase 4: Production Launch
 ```
 
 ---
 
-### المرحلة الأولى: الأساس (شهر 1-2)
-**الهدف: تشغيل أول مكالمة حقيقية مع عميل واحد**
+### Phase 1: Foundation (Month 1–2)
+**Goal: Get the first real call working end-to-end with one client**
 
-| المهمة | المسؤول | المدة | المتطلبات |
+| Task | Owner | Duration | Dependencies |
 |---|---|---|---|
-| تجهيز السيرفر وتثبيت الـ OS | DevOps | 3 أيام | شراء الأجهزة |
-| تثبيت NVIDIA drivers + CUDA + Docker | DevOps | 2 أيام | السيرفر جاهز |
-| تثبيت وتشغيل PersonaPlex | AI Engineer | 3 أيام | NVIDIA drivers |
-| تثبيت Ollama + تحميل Nemotron | AI Engineer | 1 يوم | GPU جاهز |
-| ربط PersonaPlex بـ Ollama | AI Engineer | 4 أيام | الاتنين شغالين |
-| تثبيت Qdrant + LlamaIndex | AI Engineer | 2 أيام | — |
-| بناء RAG pipeline أولي | AI Engineer | 5 أيام | Qdrant جاهز |
-| ربط Twilio كـ SIP trunk | Backend | 3 أيام | Twilio account |
-| اختبار مكالمة صوتية كاملة | Team | 3 أيام | كل حاجة شغالة |
-| إصلاح bugs وضبط الـ latency | Team | 5 أيام | اختبار ناجح |
+| Provision server and install OS | DevOps | 3 days | Hardware purchased |
+| Install NVIDIA drivers + CUDA + Docker | DevOps | 2 days | Server ready |
+| Install and run PersonaPlex | AI Engineer | 3 days | NVIDIA drivers |
+| Install Ollama + pull Nemotron model | AI Engineer | 1 day | GPU ready |
+| Connect PersonaPlex to Ollama | AI Engineer | 4 days | Both running |
+| Install Qdrant + LlamaIndex | AI Engineer | 2 days | — |
+| Build initial RAG pipeline | AI Engineer | 5 days | Qdrant ready |
+| Connect Twilio as SIP trunk | Backend | 3 days | Twilio account |
+| End-to-end voice call test | Team | 3 days | Everything running |
+| Bug fixes and latency tuning | Team | 5 days | Test passed |
 
 ---
 
-### المرحلة الثانية: الربط (شهر 3-4)
-**الهدف: الـ stack الكامل شغال مع بعض**
+### Phase 2: Integration (Month 3–4)
+**Goal: Full stack wired together — voice, reasoning, and real actions**
 
-| المهمة | المسؤول | المدة | المتطلبات |
+| Task | Owner | Duration | Dependencies |
 |---|---|---|---|
-| تثبيت NemoClaw + onboarding أول sandbox | AI Engineer | 4 أيام | NemoClaw CLI |
-| بناء MCP tools للـ CRM الخاص بالعميل | Backend | 1 أسبوع | CRM API docs |
-| دمج OpenClaw مع NemoClaw sandbox | AI Engineer | 5 أيام | الاتنين جاهزين |
-| إعداد NeMo Guardrails للعميل الأول | AI Engineer | 3 أيام | Colang config |
-| بناء Agno orchestration layer | AI Engineer | 1 أسبوع | كل agents جاهزة |
-| اختبار Action execution كامل (كنسلة، استرداد) | Team | 4 أيام | Agno + NemoClaw |
-| إضافة call recording + transcript | Backend | 3 أيام | Storage جاهز |
-| بناء sentiment analysis أولي | AI Engineer | 3 أيام | Transcripts |
-| UAT مع عميل حقيقي (pilot) | Team | 2 أسبوع | كل المرحلة |
+| Install NemoClaw + onboard first sandbox | AI Engineer | 4 days | NemoClaw CLI |
+| Build MCP tools for client CRM | Backend | 1 week | CRM API docs |
+| Integrate OpenClaw with NemoClaw sandbox | AI Engineer | 5 days | Both ready |
+| Configure NeMo Guardrails for first client | AI Engineer | 3 days | Colang config |
+| Build Agno orchestration layer | AI Engineer | 1 week | All agents ready |
+| Test full action execution (cancel, refund) | Team | 4 days | Agno + NemoClaw |
+| Add call recording + transcript pipeline | Backend | 3 days | Storage ready |
+| Build initial sentiment analysis | AI Engineer | 3 days | Transcripts available |
+| UAT with real client (paid pilot) | Team | 2 weeks | Full phase complete |
 
 ---
 
-### المرحلة الثالثة: التوسع (شهر 5-7)
-**الهدف: Multi-tenant — أكتر من شركة على نفس السيرفر**
+### Phase 3: Multi-Tenant Scale (Month 5–7)
+**Goal: Multiple companies running isolated on the same server**
 
-| المهمة | المسؤول | المدة | المتطلبات |
+| Task | Owner | Duration | Dependencies |
 |---|---|---|---|
-| تحويل الـ setup لـ template قابل للتكرار | DevOps | 1 أسبوع | المرحلة التانية |
-| بناء client onboarding script | DevOps | 4 أيام | Template جاهز |
-| Kubernetes setup + namespaces | DevOps | 1 أسبوع | K8s installed |
-| عزل الـ containers بـ NetworkPolicy | DevOps | 3 أيام | K8s جاهز |
-| Qdrant namespaces per client | AI Engineer | 2 أيام | Qdrant جاهز |
-| GPU allocation per namespace | DevOps | 3 أيام | K8s + GPU |
-| تثبيت Kafka + أول topic setup | Backend | 4 أيام | Kafka server |
-| ربط كل الـ events بـ Kafka | Backend | 1 أسبوع | Kafka جاهز |
-| onboarding شركة ثانية (اختبار العزل) | Team | 4 أيام | Template + K8s |
-| Load testing (50+ مكالمة متزامنة) | Team | 3 أيام | شركتين شغالين |
+| Convert setup into a repeatable template | DevOps | 1 week | Phase 2 complete |
+| Build client onboarding automation script | DevOps | 4 days | Template ready |
+| Kubernetes setup + namespace per client | DevOps | 1 week | K8s installed |
+| Enforce cross-client NetworkPolicy isolation | DevOps | 3 days | K8s ready |
+| Per-client Qdrant namespaces | AI Engineer | 2 days | Qdrant ready |
+| GPU resource limits per namespace | DevOps | 3 days | K8s + GPU operator |
+| Install Kafka + define initial topics | Backend | 4 days | Kafka server |
+| Wire all system events through Kafka | Backend | 1 week | Kafka ready |
+| Onboard second client (isolation test) | Team | 4 days | Template + K8s |
+| Load test — 50+ concurrent calls | Team | 3 days | Two clients live |
 
 ---
 
-### المرحلة الرابعة: الإنتاج (شهر 8-9)
-**الهدف: Scale كامل وإطلاق رسمي**
+### Phase 4: Production Launch (Month 8–9)
+**Goal: Full scale, full observability, official launch**
 
-| المهمة | المسؤول | المدة | المتطلبات |
+| Task | Owner | Duration | Dependencies |
 |---|---|---|---|
-| Grafana dashboards لكل عميل | DevOps | 4 أيام | Prometheus |
-| Sentiment analysis dashboard حي | AI Engineer | 4 أيام | Grafana |
-| Kubernetes auto-scaling rules | DevOps | 3 أيام | K8s + Prometheus |
-| GPU time-slicing optimization | AI Engineer | 3 أيام | Benchmarks |
-| Security audit كامل | Security | 1 أسبوع | كل الـ stack |
-| Penetration testing للـ NemoClaw sandboxes | Security | 4 أيام | Audit |
-| Disaster recovery + backup strategy | DevOps | 3 أيام | Production ready |
-| Documentation + runbooks | Team | 4 أيام | كل حاجة |
-| Soft launch (3 شركات) | Team | 2 أسبوع | كل المراحل |
-| Full production launch | Team | 1 أسبوع | Soft launch ناجح |
+| Grafana dashboards per client | DevOps | 4 days | Prometheus |
+| Live sentiment analysis dashboard | AI Engineer | 4 days | Grafana ready |
+| Kubernetes auto-scaling rules | DevOps | 3 days | K8s + Prometheus |
+| GPU time-slicing optimization | AI Engineer | 3 days | Benchmarks complete |
+| Full security audit | Security | 1 week | Entire stack |
+| Penetration testing on NemoClaw sandboxes | Security | 4 days | Audit complete |
+| Disaster recovery + backup strategy | DevOps | 3 days | Production ready |
+| Documentation + operational runbooks | Team | 4 days | Everything done |
+| Soft launch (3 clients) | Team | 2 weeks | All phases complete |
+| Full production launch | Team | 1 week | Soft launch successful |
 
 ---
 
-## 4. الفريق المطلوب
+## 4. Team
 
-| الدور | العدد | متى يبدأ | المسؤوليات |
+| Role | Headcount | Start | Core Responsibilities |
 |---|---|---|---|
-| Principal AI Engineer | 1 | اليوم 1 | PersonaPlex، Ollama، Agno، NemoClaw، RAG |
-| Backend Engineer | 1 | اليوم 1 | Telephony، APIs، MCP tools، Kafka |
-| DevOps / Platform Engineer | 1 | اليوم 1 | Docker، Kubernetes، GPU، Monitoring |
-| Security Engineer | 1 | شهر 4 | NemoClaw audit، penetration testing |
-| QA Engineer | 1 | شهر 2 | اختبار المكالمات، load testing |
+| Principal AI Engineer | 1 | Day 1 | PersonaPlex, Ollama, Agno, NemoClaw, RAG |
+| Backend Engineer | 1 | Day 1 | Telephony, APIs, MCP tools, Kafka |
+| DevOps / Platform Engineer | 1 | Day 1 | Docker, Kubernetes, GPU allocation, Monitoring |
+| Security Engineer | 1 | Month 4 | NemoClaw audit, penetration testing, compliance |
+| QA Engineer | 1 | Month 2 | Call testing, load testing, regression |
 
 ---
 
-## 5. الميزانية التقديرية
+## 5. Budget Estimate
 
-### الأجهزة (One-time)
+### Hardware (One-time)
 
-| البند | التكلفة (USD) | ملاحظات |
+| Item | Cost (USD) | Notes |
 |---|---|---|
-| 4x NVIDIA A100 80GB | $120,000 — $160,000 | السوق الثانوي أو NVIDIA مباشرة |
-| 2x AMD EPYC Server CPU | $8,000 — $12,000 | أو Intel Xeon |
-| 512 GB DDR5 RAM | $3,000 — $5,000 | ECC registered |
+| 4x NVIDIA A100 80GB | $120,000 — $160,000 | Secondary market or direct from NVIDIA |
+| 2x AMD EPYC Server CPU | $8,000 — $12,000 | Or Intel Xeon equivalent |
+| 512 GB DDR5 ECC RAM | $3,000 — $5,000 | Registered ECC |
 | 4x 4TB NVMe SSD | $2,000 — $3,000 | Samsung / WD Enterprise |
-| Server Chassis + PSU | $3,000 — $5,000 | Supermicro / Dell |
-| Network + KVM + UPS | $2,000 — $3,000 | — |
-| **الإجمالي** | **$138,000 — $188,000** | |
+| Server chassis + PSU | $3,000 — $5,000 | Supermicro / Dell |
+| Networking + KVM + UPS | $2,000 — $3,000 | — |
+| **Total** | **$138,000 — $188,000** | |
 
-### الخدمات الشهرية
+### Monthly Operating Costs
 
-| البند | التكلفة (USD) | ملاحظات |
+| Item | Cost (USD/month) | Notes |
 |---|---|---|
-| Twilio SIP Trunk | $500 — $2,000 | حسب حجم المكالمات |
-| Colocation / Data Center | $1,000 — $3,000 | أو on-premise |
-| Monitoring tools | $200 — $500 | Grafana Cloud أو self-hosted |
-| Backup + offsite storage | $200 — $500 | AWS S3 أو Wasabi |
-| **الإجمالي** | **$1,900 — $6,000 / شهر** | |
+| Twilio SIP Trunk + minutes | $500 — $2,000 | Scales with call volume |
+| Colocation / data center | $1,000 — $3,000 | Or on-premise if space available |
+| Monitoring tools | $200 — $500 | Grafana Cloud or self-hosted |
+| Offsite backup storage | $200 — $500 | AWS S3 or Wasabi |
+| **Total** | **$1,900 — $6,000 / month** | |
 
-### تكلفة الفريق (تقدير مصر/المنطقة)
+### Team Cost (MENA Market Estimate)
 
-| الدور | التكلفة (USD/شهر) |
+| Role | Cost (USD/month) |
 |---|---|
 | Principal AI Engineer | $3,000 — $5,000 |
 | Backend Engineer | $2,000 — $3,500 |
 | DevOps Engineer | $2,000 — $3,500 |
 | Security + QA | $1,500 — $3,000 |
-| **الإجمالي** | **$8,500 — $15,000 / شهر** |
+| **Total** | **$8,500 — $15,000 / month** |
 
 ---
 
-## 6. المخاطر والحلول
+## 6. Risks and Mitigations
 
-| الخطر | الاحتمالية | التأثير | الحل |
+| Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| NemoClaw في مرحلة Alpha — قد يتغير | عالي | متوسط | ابن abstraction layer فوقيه عشان تقدر تبدله |
-| GPU مكلف جداً في البداية | عالي | عالي | ابدأ بـ 2 GPU بس، وسّع لما يجي عملاء |
-| PersonaPlex latency مع عملاء كتير | متوسط | عالي | Speculative processing + streaming |
-| بيانات العميل تتسرب بين الشركات | منخفض | عالي | 4 layers isolation + security audit دوري |
-| Ollama مش بيعرف سياسات الشركة | متوسط | متوسط | RAG + fine-tuning مستقبلاً |
+| NemoClaw is in Alpha — APIs may change | High | Medium | Build an abstraction layer on top so it can be swapped |
+| GPU cost is high upfront | High | High | Start with 2 GPUs, expand as clients are signed |
+| PersonaPlex latency under high concurrent load | Medium | High | Speculative RAG prefetch + sentence-level streaming |
+| Client data leakage between companies | Low | Critical | 4 isolation layers + regular security audits |
+| LLM has no knowledge of client policies | Medium | Medium | Per-client RAG + optional fine-tuning later |
+| Team unfamiliar with this specific stack | Medium | Medium | Start with a simple prototype and learn by building |
 
 ---
 
-## 7. مقاييس النجاح
+## 7. Success Metrics
 
-| المقياس | الهدف الأدنى | الهدف المثالي | كيف تقيسه |
+| Metric | Minimum Target | Ideal Target | How to Measure |
 |---|---|---|---|
-| Response Latency (TTFT) | < 500ms | < 250ms | Grafana P95 |
-| Resolution Rate | > 80% | > 95% | Kafka events |
-| Concurrent Calls / GPU | 50 مكالمة | 100+ | Kubernetes metrics |
-| Client Data Isolation | 100% | 100% | Security audit |
-| Guardrails Accuracy | > 95% | > 99% | Manual review + Grafana |
-| System Uptime | 99% | 99.9% | Prometheus |
+| Response Latency (TTFT) | < 500ms | < 250ms | Grafana P95 latency |
+| Resolution Rate | > 80% | > 95% | Kafka events — resolved vs escalated |
+| Concurrent Calls per GPU | 50 calls | 100+ calls | Kubernetes resource metrics |
+| Client Data Isolation | 100% | 100% | Security audit — zero cross-leak |
+| Guardrails Accuracy | > 95% | > 99% | Manual review sample + Grafana |
+| System Uptime | 99% | 99.9% | Prometheus uptime monitor |
 
 ---
-د.
+
+## Next Step
+
+> Sign the first paying pilot client and buy the hardware — before writing a single line of code.
