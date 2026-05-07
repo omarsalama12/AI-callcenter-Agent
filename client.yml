@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────
+# CLIENT CONFIGURATION TEMPLATE
+# Copy this file to clients/<client_id>/config/client.yml
+# Fill in all fields before running onboard_client.sh
+# ─────────────────────────────────────────────────────────────
+
+client:
+  id: ""                        # unique slug: e.g. telecom_egypt
+  name: ""                      # display name: e.g. "Telecom Egypt"
+  language: ar-EG               # BCP-47 language code
+  dialect: egyptian             # egyptian | gulf | levantine | msa
+
+voice:
+  persona: NATM1                # PersonaPlex voice ID
+                                # Natural Male:   NATM0-3
+                                # Natural Female: NATF0-3
+                                # Variety Male:   VARM0-4
+                                # Variety Female: VARF0-4
+  role_prompt: |
+    You are a professional customer service agent for {client.name}.
+    Speak in a friendly and helpful tone.
+    Never discuss competitors or reveal internal policies.
+
+llm:
+  model: nemotron-mini:q4_k_m   # Ollama model string
+  temperature: 0.3              # Lower = more consistent
+  max_tokens: 200               # Keep responses short for voice
+  context_window: 2048
+
+guardrails:
+  config_path: ./guardrails/    # Points to Colang config directory
+  blocked_topics:
+    - competitors
+    - internal_pricing
+    - employee_personal_info
+  escalate_to_human_if:
+    - customer_anger_score > 0.8
+    - topic == "legal_complaint"
+    - topic == "media_inquiry"
+
+permissions:
+  allowed_actions:
+    - get_account_info
+    - check_balance
+    - create_ticket
+    - send_confirmation_email
+  denied_actions:
+    - delete_account
+    - access_payment_card
+    - export_customer_data
+
+integrations:
+  crm:
+    type: ""                    # salesforce | hubspot | odoo | custom
+    base_url: ""
+    auth_type: bearer           # bearer | basic | api_key
+  erp:
+    type: ""
+    base_url: ""
+    auth_type: bearer
+
+recording:
+  enabled: true
+  storage_path: ./recordings/
+  transcript_enabled: true
+  sentiment_analysis: true
+
+nemoclaw:
+  sandbox_name: ""              # auto-set by onboard_client.sh
+  network_policy: restricted    # open | restricted | isolated
+  egress_allowed:
+    - ""                        # add allowed domains e.g. api.crm.com
