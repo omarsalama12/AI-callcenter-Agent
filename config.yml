@@ -1,0 +1,32 @@
+# NeMo Guardrails — LLM Backend Config
+# This file connects Guardrails to the local Ollama instance
+
+models:
+  - type: main
+    engine: ollama
+    model: nemotron-mini
+    parameters:
+      base_url: "http://localhost:11434"
+      temperature: 0.2
+
+rails:
+  input:
+    flows:
+      - check blocked topics
+      - check sensitive data request
+  output:
+    flows:
+      - check response format
+      - check no competitor mention
+      - check no internal data leak
+  dialog:
+    single_call:
+      enabled: true
+
+instructions:
+  - type: general
+    content: |
+      You are a professional customer service agent.
+      Always be helpful, concise, and on-topic.
+      Never mention competitors, internal systems, or other clients.
+      If you cannot help, politely escalate to a human agent.
