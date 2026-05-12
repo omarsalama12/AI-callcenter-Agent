@@ -1,0 +1,102 @@
+version: "3.8"
+
+# ─────────────────────────────────────────────────────────────────
+# AI-Native BPO Platform — Docker Compose
+# Shared services only. Per-client containers are managed by K8s.
+# ─────────────────────────────────────────────────────────────────
+
+services:
+
+  personaplex:
+    image: nvidia/personaplex:latest
+    runtime: nvidia
+    ports:
+      - "8998:8998"
+    volumes:
+      - ./clients:/app/clients:ro
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0,1
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    runtime: nvidia
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=2
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    restart: unless-stopped
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=changeme
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: unless-stopped
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.orchestrator
+    ports:
+      - "8000:8000"
+    depends_on:
+      - personaplex
+      - ollama
+      - qdrant
+      - kafka
+    environment:
+      - PERSONAPLEX_URL=ws://personaplex:8998/api/ws
+      - OLLAMA_URL=http://ollama:11434
+      - QDRANT_URL=http://qdrant:6333
+      - KAFKA_BOOTSTRAP=kafka:9092
+    restart: unless-stopped
+
+volumes:
+  ollama_models:
+  qdrant_data:
+  grafana_data:
